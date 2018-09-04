@@ -26,11 +26,22 @@
   },
   "homepage": "https://github.com/kanziw/server-load-manager#readme",
   "devDependencies": {
+    "@types/chai": "^4.1.4",
+    "@types/debug": "0.0.30",
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.9.4",
+    "@types/redis": "^2.8.6",
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
     "nodemon": "^1.18.4",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
     "tslint-config-prettier": "^1.15.0",
     "typescript": "^3.0.3"
+  },
+  "dependencies": {
+    "debug": "^3.1.0",
+    "objectid": "^3.2.1",
+    "redis": "^2.8.0"
   }
 }
