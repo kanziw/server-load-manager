@@ -1,0 +1,36 @@
+{
+  "name": "server-load-manager",
+  "version": "0.1.0",
+  "description": "Server load manager using Redis",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "cd src && nodemon --exec ts-node index.ts",
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "prestart": "npm run build",
+    "start": "node dist/index.js",
+    "prepublish": "npm run build",
+    "version": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/kanziw/server-load-manager.git"
+  },
+  "keywords": [
+    "server-load-manager"
+  ],
+  "author": "kanziw",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kanziw/server-load-manager/issues"
+  },
+  "homepage": "https://github.com/kanziw/server-load-manager#readme",
+  "devDependencies": {
+    "@types/node": "^10.9.4",
+    "nodemon": "^1.18.4",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "typescript": "^3.0.3"
+  }
+}
