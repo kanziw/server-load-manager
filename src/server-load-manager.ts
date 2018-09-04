@@ -48,11 +48,16 @@ export default class ServerLoadManager {
     await this.getServerLoad()
   }
 
+  public getIdleServer(): string | null {
+    const idleServerInfo = this.loadDataCached.sort((loadData1, loadData2) => loadData1.load - loadData2.load)[ 0 ]
+    return idleServerInfo ? idleServerInfo.id : null
+  }
+
   public end(flush: boolean): void {
     this.client.end(flush)
   }
 
-  private async getServerLoad(): Promise<void> {
+  protected async getServerLoad(): Promise<void> {
     this.log('+++GET_SERVER_LOAD')
     const data = await new Promise((resolve, reject) => {
       this.client.get(this.getKey('DATA'), (err, ret) => {
@@ -96,6 +101,17 @@ export default class ServerLoadManager {
     return this.loadDataCached.map(loadData => loadData.id).sort()[ 0 ] === this.id
   }
 
+  public get load(): number {
+    return this.loadInfo.load
+  }
+
+  private get loadInfo(): LoadData {
+    return this.loadDataCached.find(loadData => loadData.id === this.id) || {
+      id: this.id,
+      load: Number.POSITIVE_INFINITY,
+    }
+  }
+
   private overrideRequired(fnDesc: string) {
     assert(false, `${this.prefixLogger} [${fnDesc}] OVERRIDE REQUIRED!`)
   }
@@ -108,11 +124,11 @@ export default class ServerLoadManager {
     return `${this.prefix}:${postfix}`
   }
 
-  private get prefix() {
+  private get prefix(): string {
     return `${this.SLMKey}:${this.type}`
   }
 
-  private get prefixLogger() {
+  private get prefixLogger(): string {
     return `[${this.type}:${this.id}]`
   }
 }
