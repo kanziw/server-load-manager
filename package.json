@@ -11,6 +11,7 @@
     "start": "node dist/index.js",
     "test": "NODE_ENV=test mocha -r ts-node/register test/*.spec.ts",
     "prepublish": "npm run build",
+    "postpublish": "git push --follow-tags",
     "version": "npm run build"
   },
   "repository": {
