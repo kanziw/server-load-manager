@@ -1,6 +1,6 @@
 import assert from 'assert'
 import debug from 'debug'
-import objectid from 'objectid'
+import objectId from 'objectid'
 import redis, { RedisClient } from 'redis'
 import { LoadData, ServerLoadManagerOptions } from './interfaces'
 
@@ -11,10 +11,10 @@ const logger = debug('SLM')
 export default class ServerLoadManager {
   public readonly SLMKey: string
   public readonly type: string
-  private readonly client: RedisClient
-  private readonly id: string
+  public readonly id: string
+  protected readonly client: RedisClient
 
-  private loadDataCached: LoadData[]
+  public loadDataCached: LoadData[]
 
   constructor(options: ServerLoadManagerOptions, client?: RedisClient) {
     const { port = 6379, host = '127.0.0.1', type = '__MISSING', SLMKey = '' } = options
@@ -25,7 +25,16 @@ export default class ServerLoadManager {
     this.type = type
 
     this.loadDataCached = []
-    this.id = objectid().toString()
+    this.id = objectId().toString()
+  }
+
+  protected async postRegister(): Promise<any> {
+    this.overrideRequired('postRegister: () => Promise<any>')
+  }
+
+  protected async generateLoadData(serverIds: string[]): Promise<LoadData[]> {
+    this.overrideRequired('generateLoadData: string[] => Promise<LoadData[]>')
+    return []
   }
 
   public async register(): Promise<void> {
@@ -35,6 +44,7 @@ export default class ServerLoadManager {
       })
     })
 
+    await this.postRegister()
     await this.getServerLoad()
   }
 
@@ -70,7 +80,9 @@ export default class ServerLoadManager {
     }) as string[]
     this.log('>> SERVER IDS', serverIds)
 
-    const data = serverIds.map(id => ({ id, load: 100 }))
+    const data = await this.generateLoadData(serverIds)
+    this.loadDataCached = data
+
     this.log('>> UPDATE THIS DATA', data)
     await new Promise((resolve, reject) => {
       this.client.set(this.getKey('DATA'), global.JSON.stringify(data), (err, ret) => {
@@ -84,8 +96,12 @@ export default class ServerLoadManager {
     return this.loadDataCached.map(loadData => loadData.id).sort()[ 0 ] === this.id
   }
 
+  private overrideRequired(fnDesc: string) {
+    assert(false, `${this.prefixLogger} [${fnDesc}] OVERRIDE REQUIRED!`)
+  }
+
   private log(...msg: any[]): void {
-    logger(`[${this.type}:${this.id}]`, ...msg)
+    logger(this.prefixLogger, ...msg)
   }
 
   private getKey(postfix: string): string {
@@ -94,5 +110,9 @@ export default class ServerLoadManager {
 
   private get prefix() {
     return `${this.SLMKey}:${this.type}`
+  }
+
+  private get prefixLogger() {
+    return `[${this.type}:${this.id}]`
   }
 }
