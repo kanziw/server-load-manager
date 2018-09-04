@@ -1,6 +1,6 @@
 {
   "name": "server-load-manager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Server load manager using Redis",
   "main": "dist/index.js",
   "scripts": {
