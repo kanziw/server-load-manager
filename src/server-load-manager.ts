@@ -15,14 +15,18 @@ export default class ServerLoadManager {
   protected readonly client: RedisClient
 
   public loadDataCached: LoadData[]
+  private readonly interval: number
+  private timer: NodeJS.Timer | null
 
   constructor(options: ServerLoadManagerOptions, client?: RedisClient) {
-    const { port = 6379, host = '127.0.0.1', type = '__MISSING', SLMKey = '' } = options
+    const { port = 6379, host = '127.0.0.1', type = '__MISSING', SLMKey = '', interval = 1000 } = options
     assert(type && type !== '__MISSING', 'Missing type.')
 
     this.client = client instanceof RedisClient ? client : redis.createClient(port, host)
     this.SLMKey = SLMKey || 'SLM'
     this.type = type
+    this.interval = interval
+    this.timer = null
 
     this.loadDataCached = []
     this.id = objectId().toString()
@@ -46,6 +50,20 @@ export default class ServerLoadManager {
 
     await this.postRegister()
     await this.getServerLoad()
+  }
+
+  public async unregister(): Promise<void> {
+    if (this.timer) {
+      this.log('>> Remove reload timer')
+      clearTimeout(this.timer)
+    }
+
+    await new Promise((resolve, reject) => {
+      this.client.srem(this.getKey('SET'), this.id, (err, ret) => {
+        return err ? reject(err) : resolve(ret)
+      })
+    })
+    this.log('>> Unregistered.')
   }
 
   public getIdleServer(): string | null {
@@ -78,7 +96,9 @@ export default class ServerLoadManager {
     }
 
     this.log('---GET_SERVER_LOAD')
-    // setTimeout(this.getServerLoad, 1000)
+    if (process.env.NODE_ENV !== 'test') {
+      this.timer = setTimeout(this.getServerLoad, this.interval)
+    }
   }
 
   private async updateLoadData() {

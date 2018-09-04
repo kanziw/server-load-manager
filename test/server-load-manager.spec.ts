@@ -34,6 +34,36 @@ describe('Core, using SocketServerLoadManager', () => {
     })
   })
 
+  describe('Unregister', () => {
+    let slm1: SocketServerLoadManager
+    let slm2: SocketServerLoadManager
+    let managers: SocketServerLoadManager[]
+
+    beforeEach(async () => {
+      slm1 = new SocketServerLoadManager()
+      slm2 = new SocketServerLoadManager()
+      managers = [ slm1, slm2 ]
+      await Promise.all(managers.map(m => m.register()))
+      await Promise.all(managers.map(m => m.reloadLoadData()))
+    })
+    afterEach(() => managers.forEach(m => m.end(true)))
+
+    it('should work', async () => {
+      expect(slm1.amIMaster()).to.eql(true)
+      expect(slm1.loadDataCached).to.be.an.instanceof(Array).lengthOf(2)
+      expect(slm2.loadDataCached).to.be.an.instanceof(Array).lengthOf(2)
+
+      await slm2.unregister()
+      await slm1.reloadLoadData()
+      await slm2.reloadLoadData()
+
+      expect(slm1.loadDataCached).to.be.an.instanceof(Array).lengthOf(1)
+      expect(slm1.loadDataCached[ 0 ].id).to.eql(slm1.id)
+      expect(slm2.loadDataCached).to.be.an.instanceof(Array).lengthOf(1)
+      expect(slm2.loadDataCached[ 0 ].id).to.eql(slm1.id)
+    })
+  })
+
   describe('Master and Slave nodes', () => {
     let slm1: SocketServerLoadManager
     let slm2: SocketServerLoadManager
@@ -46,6 +76,7 @@ describe('Core, using SocketServerLoadManager', () => {
       slm3 = new SocketServerLoadManager()
       managers = [ slm1, slm2, slm3 ]
       await Promise.all(managers.map(m => m.register()))
+      await Promise.all(managers.map(m => m.reloadLoadData()))
     })
     afterEach(() => {
       managers.forEach(m => m.end(true))
