@@ -53,8 +53,13 @@ export default class ServerLoadManager {
     return idleServerInfo ? idleServerInfo.id : null
   }
 
-  public end(flush: boolean): void {
+  public end(flush: boolean = false): void {
     this.client.end(flush)
+    this.postEnd()
+  }
+
+  protected postEnd(): void {
+    //
   }
 
   protected async getServerLoad(): Promise<void> {

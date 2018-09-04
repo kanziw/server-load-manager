@@ -1,11 +1,6 @@
 import { expect } from 'chai'
 import redis, { RedisClient } from 'redis'
-import SharedResourcesManager from 'shared-resources-manager'
-import ServerLoadManager from '../src/index'
-import { LoadData, ServerLoadManagerOptions } from '../src/interfaces'
-
-const srm = new SharedResourcesManager({ uniqueKey: 'SRM' })
-const count = 1000
+import { SocketServerLoadManager } from './helper'
 
 describe('Core, using SocketServerLoadManager', () => {
   const client: RedisClient = redis.createClient()
@@ -17,7 +12,6 @@ describe('Core, using SocketServerLoadManager', () => {
   })
   after(() => {
     client.end(true)
-    srm.end(true)
   })
 
   describe('Register', () => {
@@ -90,7 +84,7 @@ describe('Core, using SocketServerLoadManager', () => {
       expect(slm1.load).to.eql(0)
       expect(slm2.load).to.eql(0)
 
-      await srm.take(slm1.id, 10)
+      await slm1.srm.take(slm1.id, 10)
       await slm1.reloadLoadData()
       await slm2.reloadLoadData()
 
@@ -102,29 +96,3 @@ describe('Core, using SocketServerLoadManager', () => {
     })
   })
 })
-
-const numbers1000to1999 = [ ...Array(count).keys() ].map(val => (val + count).toString())
-
-class SocketServerLoadManager extends ServerLoadManager {
-  constructor(options: ServerLoadManagerOptions = {}) {
-    options.type = 'SOCKET'
-    super(options)
-  }
-
-  protected async postRegister(): Promise<void> {
-    await srm.add(this.id, numbers1000to1999)
-  }
-
-  protected async generateLoadData(serverIds: string[]): Promise<LoadData[]> {
-    const loads = await Promise.all(serverIds.map(id => srm.sizeOf(id)))
-    return serverIds.map((id, idx) => ({ id, load: count - loads[ idx ] }))
-  }
-
-  /**
-   * only for test case
-   * @returns {Promise<void>}
-   */
-  public reloadLoadData() {
-    return this.getServerLoad()
-  }
-}
