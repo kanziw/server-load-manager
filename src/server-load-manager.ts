@@ -92,7 +92,7 @@ export default class ServerLoadManager {
     this.log('---UPDATE_SERVER_LOAD')
   }
 
-  private amIMaster(): boolean {
+  public amIMaster(): boolean {
     return this.loadDataCached.map(loadData => loadData.id).sort()[ 0 ] === this.id
   }
 
